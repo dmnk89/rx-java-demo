@@ -21,7 +21,7 @@ public class WordCounter {
 
     static Observable<String> split(Observable<String> strings) {
         return strings
-                .flatMap(s -> from(s.split("\\s+")));
+                .flatMap(s -> from(s.split("\\W+")));
     }
 
     static Observable<Count> countWords(Observable<String> strings) {

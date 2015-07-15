@@ -3,6 +3,7 @@ package pl.ppl.demo.rxjava.wordcount;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.schedulers.Schedulers;
@@ -13,6 +14,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static pl.ppl.demo.rxjava.wordcount.WordCounter.countWords;
 
@@ -51,21 +53,24 @@ public class BroadcastWordCountServer extends WebSocketServer {
     }
 
 
-    public Observer<? super Count> observable() {
+    public Observer<? super Count> subscribe() {
         return subject;
     }
 
 
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) throws UnknownHostException, InterruptedException {
 
         BroadcastWordCountServer server = new BroadcastWordCountServer(new InetSocketAddress(9000));
         server.start();
 
+        Thread.sleep(3000);
+
         countWords(System.in)
+                .zipWith(Observable.interval(200, TimeUnit.MILLISECONDS), (count, aLong) -> count)
                 .subscribeOn(Schedulers.io())
                 .doOnNext(System.out::println)
                 .doOnCompleted(() -> stop(server))
-                .subscribe(server.observable());
+                .subscribe(server.subscribe());
 
 
 

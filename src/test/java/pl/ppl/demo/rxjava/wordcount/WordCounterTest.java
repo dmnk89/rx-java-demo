@@ -31,14 +31,14 @@ public class WordCounterTest {
     @Test
     public void shouldSplitWords() {
         //given
-        Observable<String> strings = Observable.just("some not\t very\n complicated content");
+        Observable<String> strings = Observable.just("some not\t very\n\r\n\r\r\n complicated content");
         String[] expected = {"some", "not", "very", "complicated", "content"};
 
         //when
         Observable<String> result = WordCounter.split(strings);
 
         //then
-        assertThat(result.toBlocking().getIterator()).containsSequence(expected);
+        assertThat(result.toBlocking().getIterator()).containsExactly(expected);
     }
 
     @Test

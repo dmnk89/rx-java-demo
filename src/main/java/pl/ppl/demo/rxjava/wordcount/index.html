@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8"/>
+
+<title>WebSocket Test</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js"></script>
+
+
+<h2>WebSocket Test</h2>
+
+
+<canvas id="myChart" width="1027" height="500"></canvas>
+
+<div id="output"></div>
+
+<script language="JavaScript" type="application/javascript">
+    var labels = [];
+    var data = {
+        labels: labels,
+        datasets: [
+            {
+                label: "My First dataset",
+                fillColor: "rgba(220,220,220,0.5)",
+                strokeColor: "rgba(220,220,220,0.8)",
+                highlightFill: "rgba(220,220,220,0.75)",
+                highlightStroke: "rgba(220,220,220,1)",
+                data: []
+            }
+        ]
+    };
+    var ctx = document.getElementById("myChart").getContext("2d");
+    var myBarChart = new Chart(ctx).Bar(data);
+
+</script>
+<script language="javascript" type="text/javascript">
+
+    var wsUri = "ws://localhost:9000";
+    var output;
+
+    function init() {
+        output = document.getElementById("output");
+        testWebSocket();
+    }
+
+    function testWebSocket() {
+        websocket = new WebSocket(wsUri);
+        websocket.onopen = function (evt) {
+            onOpen(evt)
+        };
+        websocket.onclose = function (evt) {
+            onClose(evt)
+        };
+        websocket.onmessage = function (evt) {
+            onMessage(evt)
+        };
+        websocket.onerror = function (evt) {
+            onError(evt)
+        };
+    }
+
+    function onOpen(evt) {
+        writeToScreen("CONNECTED");
+        doSend("WebSocket rocks");
+    }
+
+    function onClose(evt) {
+        writeToScreen("DISCONNECTED");
+    }
+
+    function onMessage(evt) {
+        var wordCount = JSON.parse(evt.data);
+        {
+            for (var key in wordCount) {
+
+                var i = labels.indexOf(key);
+                if (i < 0) {
+                    myBarChart.addData([wordCount[key]], key);
+                    console.log('new data set' + evt.data);
+                    console.log('labels:' + labels);
+                }else{
+                    console.log('updating data:' + evt.data);
+                    myBarChart.datasets[0].bars[i].value = wordCount[key];
+                }
+
+            }
+        }
+        myBarChart.update();
+        writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + '</span>');
+    }
+
+    function onError(evt) {
+        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+    }
+
+    function doSend(message) {
+        writeToScreen("SENT: " + message);
+        websocket.send(message);
+    }
+
+    function writeToScreen(message) {
+        var pre = document.createElement("p");
+        pre.style.wordWrap = "break-word";
+        pre.innerHTML = message;
+        output.appendChild(pre);
+    }
+
+    window.addEventListener("load", init, false);
+
+</script>
